@@ -1,15 +1,13 @@
 ---
-title: "PS5 Template"
-author: "Your Name"
-date: "2/13/2023"
+title: "PS5"
+author: "Rohan Narasayya"
+date: "2/19/2023"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
-# Disclaimer: this serves as a template for you to compose your answer for PS5. It is 100% hardcoded, so error may exists. Please refer to the official spec for a full list of questions and requirements.
 
 # Instructions
 This is a problem set about rmarkdown and plotting (using ggplot). Unlike the previous problem sets, this one does not give you a ready-made GH repo with a code file–it is now your task to create a repo and include your rmarkdown file in there.\
@@ -58,11 +56,20 @@ You first task is to do a very simple data check:
 
 
 2. (2pt) Load data. How many rows/columns do we have?  \
+```{r}
+library(tidyverse)
+df <- read.delim("./gapminder.csv.bz2")
+nrow(df)
+ncol(df)
+```
 
 
 
 3. (2pt) Print a small sample of data. Does it look OK? 
-  
+```{r}
+head(df)
+```
+The data looks good for the the most part, but there are many rows with NA values.
   
 ---------------------------------------------------------------------
 
@@ -70,19 +77,35 @@ You first task is to do a very simple data check:
 # 2 Descriptive statistics (15pt)
 
 1. (3pt) How many countries are there in the dataset? Analyze all three: *iso3*, *iso2* and *name*.
+```{r}
+n_distinct(df$name)
+n_distinct(df$iso2)
+n_distinct(df$iso3)
+```
 
 2. If you did this correctly, you saw that there are more iso-2 codes than names, and there are even more *iso3*-codes. What is going on? Can you find it out?
 
     (a) (5pt) Find how many names are there for each iso-2 code. Are there any iso-2 codes that correspond to more than one name? What are these countries?
-    
+```{r}
+iso_2_count <- df %>% group_by(iso2) %>% 
+  summarise(name_count = n_distinct(name))
+filter(iso_2_count, iso_2_count$name_count > 1)
+```
+
     (b) (5pt) Now repeat the same for name and iso3-code. Are there country names that have more than one iso3-code? What are these countries? Hint: two of these entitites are *CHANISL* and *NLD CURACAO*.
+```{r}
+iso3_count <- df %>% group_by(name) %>% 
+  summarise(count = n_distinct(iso3))
+filter(iso3_count, iso3_count$count > 1)
+```
+
     
 3. (2pt) What is the minimum and maximum year in these data?
 
 ```{r}
-x <- c(1, 2, 3)
-min(x)
-max(x)
+not_na_time <- filter(df, !is.na(df$time))
+min(not_na_time$time)
+max(not_na_time$time)
 ```
 
 

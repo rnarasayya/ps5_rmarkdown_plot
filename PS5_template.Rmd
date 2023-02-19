@@ -115,19 +115,112 @@ max(not_na_time$time)
 Next, let’s analyze CO2 emissions.
 
 1. (2pt) How many missing co2 emissions are there for each year? Analyze both missing *CO2* and *co2_PC*. Which years have most missing data? \
+```{r}
+missing_CO2 <- filter(not_na_time, is.na(not_na_time$co2))
+missing_CO2 %>% group_by(time) %>%
+  summarise(num_missing = length(co2)) %>%
+  arrange(desc(num_missing))
+missing_CO2_PC <- filter(not_na_time, is.na(not_na_time$co2_PC))
+missing_CO2_PC %>% group_by(time) %>%
+  summarise(num_missing = length(co2_PC)) %>%
+  arrange(desc(num_missing))
+```
+2017, 2018, 2019 have the most missing entries by far.
 
 2. (5pt) Make a plot of total CO2 emissions over time for the U.S, China, and India. Add a few more countries of your choice. Explain what do you see. \
+```{r}
+library(ggplot2)
+not_na_co2 <- filter(not_na_time, !is.na(not_na_time$co2))
+co2_overtime <- not_na_co2 %>% filter(name == c("United States of America", "China", "India", "Mexico", "Canada"))
+ggplot(co2_overtime,
+       aes(time, co2,
+           col=name)) +
+   geom_point() +
+   labs(x = "time",
+        y = "co2 emissions") +
+   theme(text = element_text(size=15))
+
+```
+The U.S has had much higher emissions in the past, but the growth rate of China and India in the last two decades is much higher than the U.S. China has also overtaken the U.S in emissions.
 
 3. (5pt) Now let’s analyze the CO2 emissions per capita (*co2_PC*). Make a similar plot of thesame countries. What does this figure suggest? \
+```{r}
+not_na_co2_PC <- filter(not_na_time, !is.na(not_na_time$co2_PC))
+co2_PC_overtime <- not_na_co2_PC %>% filter(name == c("United States of America", "China", "India", "Mexico", "Canada"))
+ggplot(co2_PC_overtime,
+       aes(time, co2_PC,
+           col=name)) +
+   geom_point() +
+   labs(x = "time",
+        y = "co2_PC emissions") +
+   theme(text = element_text(size=15))
+```
+Per capita emissions of the U.S and Canada were much higher in the past, but they have decreased consistently for the last 40 years. On the other hand, per capita emission have increased for India and China in the last 20 years.
 
 4. (6pt) Compute average CO2 emissions per capita across the continents (assume *region* is the same as continent). Comment what do you see. \
 Note: just compute averages over countries and ignore the fact that countries are of different size. \
 Hint: Americas 2016 should be 4.80. \
+```{r}
+not_na_co2_PC <- filter(df, !is.na(df$co2_PC), region != "" )
+average_co2_PC_emissions <- not_na_co2_PC %>% group_by(region, time) %>% 
+  summarise(average_emissions = mean(co2_PC))
+average_co2_PC_emissions %>% arrange(desc(average_emissions))
+average_co2_PC_emissions %>% arrange((average_emissions))
+```
+The Americas and Europe a few decades ago have the highest emissions while Africa a few decades age has the lowest emissions.
 
 5. (7pt) Make a barplot where you show the previous results–average CO2 emissions per capita across continents in 1960 and 2016. \
 Hint: it should look something along these lines(**Please refer to the spec for the graph**) \
+```{r}
+co2_PC_2016 <- average_co2_PC_emissions[average_co2_PC_emissions$time == 2016, ]
+co2_PC_1960 <- average_co2_PC_emissions[average_co2_PC_emissions$time == 1960, ]
+average_co2_PC_1960_2016 <- rbind(co2_PC_1960, co2_PC_2016)
+average_co2_PC_1960_2016
+average_co2_PC_1960_2016 %>%
+  ggplot(aes(region,average_emissions, fill=factor(time))) +
+geom_col(position = "dodge") +
+   labs(x = "continent",
+        y = "co2_PC emissions") +
+   theme(text = element_text(size=15))
+```
 
 6. Which countries are the three largest, and three smallest CO2 emitters (in terms of CO2 per capita) in 2019 for each continent? (Assume *region* is continent). \
+```{r}
+Africa <- df %>% filter(!is.na(df$co2_PC)) %>%
+  filter(region == "Africa") %>% filter(time == "2016") %>%
+  group_by(name) %>% summarise(average_emissions = mean(co2_PC)) %>%
+  arrange(desc(average_emissions))
+head(Africa, 3)
+tail(Africa, 3)
+
+Americas <- df %>% filter(!is.na(df$co2_PC)) %>%
+  filter(region == "Americas") %>% filter(time == "2016") %>%
+  group_by(name) %>% summarise(average_emissions = mean(co2_PC)) %>%
+  arrange(desc(average_emissions))
+head(Americas, 3)
+tail(Americas, 3)
+
+Asia <- df %>% filter(!is.na(df$co2_PC)) %>%
+  filter(region == "Asia") %>% filter(time == "2016") %>%
+  group_by(name) %>% summarise(average_emissions = mean(co2_PC)) %>%
+  arrange(desc(average_emissions))
+head(Asia, 3)
+tail(Asia, 3)
+
+Europe <- df %>% filter(!is.na(df$co2_PC)) %>%
+  filter(region == "Europe") %>% filter(time == "2016") %>%
+  group_by(name) %>% summarise(average_emissions = mean(co2_PC)) %>%
+  arrange(desc(average_emissions))
+head(Europe, 3)
+tail(Europe, 3)
+
+Oceania <- df %>% filter(!is.na(df$co2_PC)) %>%
+  filter(region == "Oceania") %>% filter(time == "2016") %>%
+  group_by(name) %>% summarise(average_emissions = mean(co2_PC)) %>%
+  arrange(desc(average_emissions))
+head(Oceania, 3)
+tail(Oceania, 3)
+```
 
 
 ---------------------------------------------------------------------
@@ -137,27 +230,81 @@ Let’s look at GDP per capita (*GDP_PC*)
 
 1. (8pt) Make a scatterplot of GDP per capita versus life expectancy by country, using data for 1960. Make the point size dependent on the country size, and color those according to the continent. Feel free to adjust the plot in other ways to make it better. \
 Comment what do you see there. \
+```{r}
+gdp_1960 <- filter(df, df$time == "1960", !is.na(df$GDP_PC), !is.na(df$lifeExpectancy))
+gdp_1960_country <- gdp_1960 %>% group_by(name) %>%
+  summarise(avg_gdp_pc = mean(GDP_PC), avg_le = mean(lifeExpectancy), continent = region, pop = totalPopulation)
+ggplot(data=gdp_1960_country, aes(x=avg_gdp_pc, y=avg_le)) +
+  geom_point(aes(size=pop, color=continent)) +
+   labs(x = "average gdp per capita",
+        y = "average life expectancy") +
+   theme(text = element_text(size=15))
+```
+The countries with higher gdp per capita have higher life expectancy values.
 
 2. (4pt) Make a similar plot, but this time use 2019 data only. \
+```{r}
+gdp_2019 <- filter(df, df$time == "2019", !is.na(df$GDP_PC), !is.na(df$lifeExpectancy))
+gdp_2019_country <- gdp_2019 %>% group_by(name) %>%
+  summarise(avg_gdp_pc = mean(GDP_PC), avg_le = mean(lifeExpectancy), continent = region, pop = totalPopulation)
+ggplot(data=gdp_2019_country, aes(x=avg_gdp_pc, y=avg_le)) +
+  geom_point(aes(size=pop, color=continent)) +
+   labs(x = "average gdp_pc",
+        y = "average life expectancy") +
+   theme(text = element_text(size=15))
+```
 
 
 3. (6pt) Compare these two plots and comment what do you see. How has world developed through the last 60 years? \
+The shape of the graph is almost identical, but the values for both gdp per capita and life expectancy have increased accross the board.
 
 4. (6pt) Compute the average life expectancy for each continent in 1960 and 2019. Do the results fit with what do you see on the figures? \
 Note: here as *average*I mean just average over countries, ignore the fact that countries are of different size.\
+```{r}
+df %>% filter(time == "1960", !is.na(df$lifeExpectancy)) %>% group_by(region) %>%
+  summarise(avg_le = mean(lifeExpectancy))
+df %>% filter(time == "2019", !is.na(df$lifeExpectancy)) %>% group_by(region) %>%
+  summarise(avg_le = mean(lifeExpectancy))
+```
+Yes the results fit with the plots.
 
 5. (8pt) Compute the average LE growth from 1960-2019 across the continents. Show the results in the order of growth. Explain what do you see. \
 Hint: these data (data in long form) is not the simplest to compute growth. But you may want to check out the lag() function. And do not forget to group data by continent when using lag(), otherwise your results will be messed up! See [**https://faculty.washington.edu/otoomet/info201-book/dplyr.html#dplyr-helpers-compute**](https://faculty.washington.edu/otoomet/info201-book/dplyr.html#dplyr-helpers-compute).\
 
 6. (6pt) Show the histogram of GDP per capita for years of 1960 and 2019. Try to put both histograms on the same graph, see how well you can do it! \
+```{r}
+df %>% filter(time %in% c(1960,2019) & !is.na(GDP_PC)) %>%
+  ggplot(aes(x = GDP_PC , fill = factor(time))) +
+  geom_histogram( position = "dodge") +
+  labs(x = "GDP per capita", y ="Number of Countries") +
+  ggtitle("GDP per capita in 1960 vs. 2019") +
+  theme(plot.title = element_text(hjust = 0.4)) 
+```
 
 7. (6pt) What was the ranking of US in terms of life expectancy in 1960 and in 2019? (When counting from top.) \
 Hint: check out the function rank()! \
 Hint2: 17 for 1960. \
+```{r}
+df %>% group_by(time) %>% 
+  filter(!is.na(lifeExpectancy) & !is.na(name),time %in% c(1960,2019))%>%
+  mutate(position = rank(desc(lifeExpectancy))) %>% 
+  select(name, lifeExpectancy, position, time) %>% 
+  filter(name == "United States of America")
+
+```
 
 8. (6pt) If you did this correctly, then you noticed that US ranking has been falling quite a bit. But we also have more countries in 2019–what about the relative rank divided by the corresponding number of countries that have LE data in the corresponding year? \
 Hint: 0.0904 for 1960. \
+```{r}
+df %>% group_by(time) %>% 
+  filter(!is.na(lifeExpectancy) & !is.na(name),time %in% c(1960,2019))%>%
+  mutate(position = rank(desc(lifeExpectancy))) %>% 
+  select(name, lifeExpectancy, position, time) %>% 
+  mutate(relative_rank = position/sum(n())) %>% 
+  filter(name == "United States of America")
+```
 
 ---------------------------------------------------------------------
 
 Finally tell us how many hours did you spend on this PS.
+I spent about 6 hours on this PS.

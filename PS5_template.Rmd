@@ -91,14 +91,14 @@ iso_2_count <- df %>% group_by(iso2) %>%
   summarise(name_count = n_distinct(name))
 filter(iso_2_count, iso_2_count$name_count > 1)
 ```
-
+No iso2 codes that correspond to more than one name.
     (b) (5pt) Now repeat the same for name and iso3-code. Are there country names that have more than one iso3-code? What are these countries? Hint: two of these entitites are *CHANISL* and *NLD CURACAO*.
 ```{r}
 iso3_count <- df %>% group_by(name) %>% 
   summarise(count = n_distinct(iso3))
 filter(iso3_count, iso3_count$count > 1)
 ```
-
+There are 4 names that correspond to more than 1 iso3 code. 
     
 3. (2pt) What is the minimum and maximum year in these data?
 
